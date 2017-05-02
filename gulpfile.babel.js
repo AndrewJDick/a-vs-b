@@ -18,7 +18,7 @@ const   gulp 	       = require('gulp'),
 // HTML
 gulp.task('html', () => {
 	return gulp.src('./src/*.html')
-		.pipe(htmlmin({collapseWhitespace: true}))
+		//.pipe(htmlmin({collapseWhitespace: true}))
 		.pipe(gulp.dest('dist/'));
 })
 
@@ -84,12 +84,12 @@ gulp.task('scripts:vendor', () => {
 gulp.task('scripts:main', () => {
 	return gulp.src('./src/js/main.js')
 		.pipe(plumber())
-    .pipe(browserify({
-      insertGlobals : true
-    }))
-		.pipe(uglify())
+        .pipe(browserify({
+          insertGlobals : true
+        }))
+		//.pipe(uglify())
 		.pipe(gulp.dest('./dist/js'));
-});;
+});
 
 gulp.task('scripts', ['scripts:vendor', 'scripts:main']);
 
