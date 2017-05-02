@@ -78,7 +78,7 @@ gulp.task('scripts:vendor', () => {
 	return gulp.src('./src/js/vendor/*.js')
 		.pipe(plumber())
 		.pipe(uglify())
-		.pipe(gulp.dest('./dist/js/'));
+		.pipe(gulp.dest('./dist/js/vendor'));
 });
 
 gulp.task('scripts:main', () => {

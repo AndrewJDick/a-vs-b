@@ -1,5 +1,6 @@
 // Avoid `console` errors in browsers that lack a console.
-(function() {
+export function noConsole() {
+    window.alert('working');
     var method;
     var noop = function () {};
     var methods = [
@@ -19,6 +20,6 @@
             console[method] = noop;
         }
     }
-}());
+}
 
 // Place any jQuery/helper plugins in here.
