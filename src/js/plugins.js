@@ -1,6 +1,5 @@
 // Avoid `console` errors in browsers that lack a console.
 export function noConsole() {
-    window.alert('working');
     var method;
     var noop = function () {};
     var methods = [
