@@ -1,136 +1,101 @@
-var map;
-var markers = [];
-var infoWindow;
-var locationSelect;
+export default function initMap() {
 
-function initMap() {
-  var sydney = {lat: -33.863276, lng: 151.107977};
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: sydney,
-    zoom: 11,
-    mapTypeId: 'roadmap',
-    mapTypeControlOptions: {style: google.maps.MapTypeControlStyle.DROPDOWN_MENU}
+  // Generate the map, centering on the UK
+  var map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: 56.015425, lng: -4.174804},
+    zoom: 5,
+    disableDefaultUI: true
   });
 
-  infoWindow = new google.maps.InfoWindow();
+  var card = document.getElementById('pac-card');
+  var input = document.getElementById('pac-input');
+  var types = document.getElementById('type-selector');
+  var strictBounds = document.getElementById('strict-bounds-selector');
 
-  searchButton = document.getElementById("searchButton").onclick = searchLocations;
+  // Absolutely position the search bar on the map
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(card);
 
-  locationSelect = document.getElementById("locationSelect");
-  locationSelect.onchange = function() {
-    var markerNum = locationSelect.options[locationSelect.selectedIndex].value;
-    if (markerNum != "none"){
-      google.maps.event.trigger(markers[markerNum], 'click');
-    }
-  };
-}
+  // Add postcode layer to the map
+  // var src = 'http://raw.githubusercontent.com/AndrewJDick/a-vs-b/develop/src/media/kml/postcode-boundaries.kml';
+  // var kmlLayer = new google.maps.KmlLayer(src, {
+  //   suppressInfoWindows: true,
+  //   preserveViewport: false,
+  //   map: map
+  // });
 
-function searchLocations() {
- var address = document.getElementById("addressInput").value;
- var geocoder = new google.maps.Geocoder();
- geocoder.geocode({address: address}, function(results, status) {
-   if (status == google.maps.GeocoderStatus.OK) {
-    searchLocationsNear(results[0].geometry.location);
-   } else {
-     alert(address + ' not found');
-   }
- });
-}
+  // google.maps.event.addListener(kmlLayer, 'click', function(kmlEvent) {
+  //    console.log(kmlLayer.getMetadata());
+  // })
 
-function clearLocations() {
- infoWindow.close();
- for (var i = 0; i < markers.length; i++) {
-   markers[i].setMap(null);
- }
- markers.length = 0;
 
- locationSelect.innerHTML = "";
- var option = document.createElement("option");
- option.value = "none";
- option.innerHTML = "See all results:";
- locationSelect.appendChild(option);
-}
-
-function searchLocationsNear(center) {
-  clearLocations();
-
-  var radius = document.getElementById('radiusSelect').value;
-  var searchUrl = 'storelocator.php?lat=' + center.lat() + '&lng=' + center.lng() + '&radius=' + radius;
-
-  downloadUrl(searchUrl, function(data) {
-    var xml = parseXml(data);
-    var markerNodes = xml.documentElement.getElementsByTagName("marker");
-    var bounds = new google.maps.LatLngBounds();
-
-    for (var i = 0; i < markerNodes.length; i++) {
-      var id = markerNodes[i].getAttribute("id");
-      var name = markerNodes[i].getAttribute("name");
-      var address = markerNodes[i].getAttribute("address");
-      var distance = parseFloat(markerNodes[i].getAttribute("distance"));
-      var latlng = new google.maps.LatLng(
-        parseFloat(markerNodes[i].getAttribute("lat")),
-        parseFloat(markerNodes[i].getAttribute("lng"))
-      );
-
-      createOption(name, distance, i);
-      createMarker(latlng, name, address);
-      bounds.extend(latlng);
-    }
-    map.fitBounds(bounds);
-    locationSelect.style.visibility = "visible";
-
-    locationSelect.onchange = function() {
-      var markerNum = locationSelect.options[locationSelect.selectedIndex].value;
-      google.maps.event.trigger(markers[markerNum], 'click');
-    };
+  // Bind the map's bounds (viewport) property to the autocomplete object,
+  // so that the autocomplete requests use the current map bounds for the
+  // bounds option in the request.
+  var autocomplete = new google.maps.places.Autocomplete(input);
+  autocomplete.bindTo('bounds', map);
+  autocomplete.setTypes(['geocode']);
+  autocomplete.setOptions({
+      strictBounds: true
   });
-}
+  autocomplete.setComponentRestrictions({
+      'country': ['gb']
+  });
 
-function createMarker(latlng, name, address) {
-  var html = "<b>" + name + "</b> <br/>" + address;
+
+  // Info Windows
+  var infowindow = new google.maps.InfoWindow();
+  var infowindowContent = document.getElementById('infowindow-content');
+
+  infowindow.setContent(infowindowContent);
+
   var marker = new google.maps.Marker({
     map: map,
-    position: latlng
+    anchorPoint: new google.maps.Point(0, -29)
   });
-  google.maps.event.addListener(marker, 'click', function() {
-    infoWindow.setContent(html);
-    infoWindow.open(map, marker);
-  });
-  markers.push(marker);
-}
 
-function createOption(name, distance, num) {
-  var option = document.createElement("option");
-  option.value = num;
-  option.innerHTML = name;
-  locationSelect.appendChild(option);
-}
+  autocomplete.addListener('place_changed', function() {
+    infowindow.close();
+    marker.setVisible(false);
+    var place = autocomplete.getPlace();
+    var district = '';
+    var town = '';
 
-function downloadUrl(url, callback) {
-  var request = window.ActiveXObject ?
-    new ActiveXObject('Microsoft.XMLHTTP') :
-    new XMLHttpRequest;
+    // Retrieve the Town and the District from the autocompleted place object
+    if (place.address_components) {
 
-  request.onreadystatechange = function() {
-    if (request.readyState == 4) {
-      request.onreadystatechange = doNothing;
-      callback(request.responseText, request.status);
+      for (let i = 0; i < place.address_components.length; i++) {
+          for (let j = 0; j < place.address_components[i].types.length; j++) {
+              if (place.address_components[i].types[j] === 'postal_code') {
+                  district = place.address_components[i].long_name.split(/(\s+)/)[0];
+              }
+              if (place.address_components[i].types[j] === 'postal_town' ) {
+                  town = place.address_components[i].long_name;
+              }
+          }
+      }
     }
-  };
 
-  request.open('GET', url, true);
-  request.send(null);
+    if (!place.geometry) {
+      // User entered the name of a Place that was not suggested and
+      // pressed the Enter key, or the Place Details request failed.
+      window.alert("No details available for input: '" + place.name + "'");
+      return;
+    }
+
+    // If the place has a geometry, then present it on a map.
+    if (place.geometry.viewport) {
+      map.fitBounds(place.geometry.viewport);
+    } else {
+      map.setCenter(place.geometry.location);
+      map.setZoom(17);  // Why 17? Because it looks good.
+    }
+
+    marker.setPosition(place.geometry.location);
+    marker.setVisible(true);
+
+    infowindowContent.children['place-address'].textContent = `${district}, ${town}`;
+    infowindowContent.children['place-copy'].textContent = `According to our data, ${district} is 74% cat people.`;
+
+    infowindow.open(map, marker);
+  });
 }
-
-function parseXml(str) {
-  if (window.ActiveXObject) {
-    var doc = new ActiveXObject('Microsoft.XMLDOM');
-    doc.loadXML(str);
-    return doc;
-  } else if (window.DOMParser) {
-    return (new DOMParser).parseFromString(str, 'text/xml');
-  }
-}
-
-function doNothing() {}
-
