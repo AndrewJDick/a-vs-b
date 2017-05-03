@@ -33,12 +33,9 @@
 
                 <div id="map"></div>
 
-                <img src="./media/img/apple-touch-icon.png" />
-
                 <div id="infowindow-content">
-                  <img src="" width="16" height="16" id="place-icon">
-                  <span id="place-name"  class="title"></span><br>
-                  <span id="place-address"></span>
+                  <span id="place-address" class="title"></span><br>
+                  <span id="place-copy"></span>
                 </div>
 
                 <script>
@@ -53,16 +50,20 @@
                     var input = document.getElementById('pac-input');
                     var types = document.getElementById('type-selector');
                     var strictBounds = document.getElementById('strict-bounds-selector');
-                    var src = './media/kml/KML_Samples.kml';
 
                     map.controls[google.maps.ControlPosition.TOP_LEFT].push(card);
 
                     // Add postcode layer to the map
-                    var kmlLayer = new google.maps.KmlLayer(src, {
-                      suppressInfoWindows: true,
-                      preserveViewport: false,
-                      map: map
-                    });
+                    // var src = 'http://raw.githubusercontent.com/AndrewJDick/a-vs-b/develop/src/media/kml/postcode-boundaries.kml';
+                    // var kmlLayer = new google.maps.KmlLayer(src, {
+                    //   suppressInfoWindows: true,
+                    //   preserveViewport: false,
+                    //   map: map
+                    // });
+
+                    // google.maps.event.addListener(kmlLayer, 'click', function(kmlEvent) {
+                    //    console.log(kmlLayer.getMetadata());
+                    // })
 
 
                     // Bind the map's bounds (viewport) property to the autocomplete object,
@@ -92,6 +93,28 @@
                       infowindow.close();
                       marker.setVisible(false);
                       var place = autocomplete.getPlace();
+                      var district = '';
+                      var town = '';
+
+                      // Retrieve the Town and the District from the autocompleted place object
+                      if (place.address_components) {
+
+                        for (let i = 0; i < place.address_components.length; i++) {
+                            for (let j = 0; j < place.address_components[i].types.length; j++) {
+                                if (place.address_components[i].types[j] === 'postal_code') {
+                                    district = place.address_components[i].long_name.split(/(\s+)/)[0];
+                                }
+                                if (place.address_components[i].types[j] === 'postal_town' ) {
+                                    town = place.address_components[i].long_name;
+                                }
+                            }
+                        }
+
+                        console.log(district);
+                        console.log(town);
+
+                      }
+
                       if (!place.geometry) {
                         // User entered the name of a Place that was not suggested and
                         // pressed the Enter key, or the Place Details request failed.
@@ -118,9 +141,9 @@
                         ].join(' ');
                       }
 
-                      infowindowContent.children['place-icon'].src = place.icon;
-                      infowindowContent.children['place-name'].textContent = place.name;
-                      infowindowContent.children['place-address'].textContent = address;
+                      infowindowContent.children['place-address'].textContent = `${district}, ${town}`;
+                      infowindowContent.children['place-copy'].textContent = `According to our data, ${district} is 74% cat people.`;
+
                       infowindow.open(map, marker);
                     });
                   }

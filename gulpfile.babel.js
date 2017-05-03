@@ -42,6 +42,12 @@ gulp.task('media:kml', () => {
         .pipe(gulp.dest('./dist/media/kml'));
 });
 
+// Animal per Household Data
+gulp.task('media:csv', () => {
+    return gulp.src(['./src/media/csv/*'])
+        .pipe(gulp.dest('./dist/media/csv'));
+});
+
 // Styles
 gulp.task('media', ['media:img', 'media:kml']);
 
