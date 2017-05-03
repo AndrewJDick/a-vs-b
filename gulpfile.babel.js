@@ -28,15 +28,25 @@ gulp.task('html:reload', ['html'], () => {
 });
 
 
-// Media
-gulp.task('media', () => {
-	return gulp.src(['./src/media/*'])
-        .pipe(newer('./dist/media'))
+// Images
+gulp.task('media:img', () => {
+	return gulp.src(['./src/media/img/*'])
+        .pipe(newer('./dist/media/img'))
         .pipe(imagemin())
-        .pipe(gulp.dest('./dist/media'));
+        .pipe(gulp.dest('./dist/media/img'));
 });
 
-gulp.task('media:reload', ['media'], () => {
+// Map Overlays
+gulp.task('media:kml', () => {
+    return gulp.src(['./src/media/kml/*'])
+        .pipe(gulp.dest('./dist/media/kml'));
+});
+
+// Styles
+gulp.task('media', ['media:img', 'media:kml']);
+
+
+gulp.task('media:reload', ['media', 'media:kml'], () => {
     return gulp.src(['./src/media/*'])
     	.pipe(connect.reload());
 });
